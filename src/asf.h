@@ -83,9 +83,6 @@
 #include <spi.h>
 #include <spi_interrupt.h>
 
-// From module: SERCOM SPI - Serial Peripheral Interface (Master Mode, Vectored I/O)
-#include <spi_master_vec.h>
-
 // From module: SYSTEM - Clock Management for SAMD21/R21/DA/HA
 #include <clock.h>
 #include <gclk.h>
@@ -102,6 +99,9 @@
 // From module: SYSTEM - Power Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
 #include <power.h>
 
+// From module: SYSTEM - Reset Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
+#include <reset.h>
+
 #include <serial.h>
 
 #include <delay.h>
@@ -115,8 +115,5 @@
 #include <tc_interrupt.h>
 
 #include <tc.h>
-
-// From module: SYSTEM - Reset Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
-#include <reset.h>
 
 #endif // ASF_H

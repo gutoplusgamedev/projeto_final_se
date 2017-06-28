@@ -47,7 +47,7 @@
 #ifndef AT25DFX_HAL_H
 #define AT25DFX_HAL_H
 
-#include <spi_master_vec.h>
+#include <spi.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,7 +60,7 @@ extern "C" {
  */
 
 /** Typedef for SPI HAL */
-typedef struct spi_master_vec_module at25dfx_spi_module_t;
+typedef struct spi_module at25dfx_spi_module_t;
 
 /**
  * \brief Initialize SPI configuration
@@ -73,14 +73,8 @@ typedef struct spi_master_vec_module at25dfx_spi_module_t;
  *
  * \param[out] config Address of config struct to initialize.
  */
-static inline void at25dfx_spi_master_vec_get_config_defaults(
-		struct spi_master_vec_config *const config)
-{
-	spi_master_vec_get_config_defaults(config);
-}
-
 static inline void at25dfx_spi_get_config_defaults(
-struct spi_config *const config)
+		struct spi_config *const config)
 {
 	spi_get_config_defaults(config);
 }

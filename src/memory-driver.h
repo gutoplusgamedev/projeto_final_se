@@ -7,8 +7,8 @@
 
 void flash_memory_init(void);
 
-void flash_memory_read (uint16_t address, uint16_t* target_buffer, uint16_t size);
+void flash_memory_read (uint32_t address, uint8_t* target_buffer, uint16_t size);
 
-void flash_memory_write (uint16_t address, uint16_t* target_buffer, uint16_t size);
+void flash_memory_write (uint32_t address, uint8_t* target_buffer, uint16_t size);
 
 #endif

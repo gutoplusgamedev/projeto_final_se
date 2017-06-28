@@ -4,7 +4,7 @@
 #include <asf.h>
 #include "memory-driver.h"
 
-#define MEMORY_READ_ADDRESS 0x1000 /*!< The memory adress where sensor data will be written to and read from. */
+#define MEMORY_READ_ADDRESS 0x10000 /*!< The memory adress where sensor data will be written to and read from. */
 
 /** @struct sensor_data_t
 	@brief Structure to hold sampled data.

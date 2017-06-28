@@ -55,9 +55,9 @@ extern "C" {
 //@{
 
 /** Alias for SPI lock function */
-#define _at25dfx_spi_lock    spi_master_vec_lock
+#define _at25dfx_spi_lock    spi_lock
 /** Alias for SPI unlock function */
-#define _at25dfx_spi_unlock  spi_master_vec_unlock
+#define _at25dfx_spi_unlock  spi_unlock
 
 /**
  * \brief Issue a read command
@@ -68,10 +68,10 @@ extern "C" {
 static inline void _at25dfx_chip_issue_read_command_wait(
 		struct at25dfx_chip_module *chip, struct at25dfx_command cmd)
 {
-	struct spi_master_vec_bufdesc vectors[2];
-
 	enum status_code status;
 	uint8_t cmd_buffer[AT25DFX_COMMAND_MAX_SIZE];
+
+	UNUSED(status);
 
 	Assert((cmd.command_size) && (cmd.command_size <= AT25DFX_COMMAND_MAX_SIZE));
 
@@ -90,22 +90,11 @@ static inline void _at25dfx_chip_issue_read_command_wait(
 	// Issue command, then start read
 	_at25dfx_chip_select(chip);
 
-	vectors[0].data = cmd_buffer;
-	vectors[0].length = cmd.command_size;
-	vectors[1].length = 0;
-
-	status = spi_master_vec_transceive_buffer_job(chip->spi, vectors, NULL);
-	Assert(status == STATUS_OK);
-	status = spi_master_vec_get_job_status_wait(chip->spi);
+	status = spi_write_buffer_wait(chip->spi, cmd_buffer, cmd.command_size);
 	Assert(status == STATUS_OK);
 
 	if (cmd.length) {
-		vectors[0].data = cmd.data.rx;
-		vectors[0].length = cmd.length;
-
-		status = spi_master_vec_transceive_buffer_job(chip->spi, NULL, vectors);
-		Assert(status == STATUS_OK);
-		status = spi_master_vec_get_job_status_wait(chip->spi);
+		status = spi_read_buffer_wait(chip->spi, cmd.data.rx, cmd.length, 0);
 		Assert(status == STATUS_OK);
 	}
 
@@ -121,10 +110,10 @@ static inline void _at25dfx_chip_issue_read_command_wait(
 static inline void _at25dfx_chip_issue_write_command_wait(
 		struct at25dfx_chip_module *chip, struct at25dfx_command cmd)
 {
-	struct spi_master_vec_bufdesc vectors[2];
-
 	enum status_code status;
 	uint8_t cmd_buffer[AT25DFX_COMMAND_MAX_SIZE];
+
+	UNUSED(status);
 
 	Assert((cmd.command_size) && (cmd.command_size <= AT25DFX_COMMAND_MAX_SIZE));
 
@@ -140,23 +129,11 @@ static inline void _at25dfx_chip_issue_write_command_wait(
 
 	_at25dfx_chip_select(chip);
 
-	vectors[0].data = cmd_buffer;
-	vectors[0].length = cmd.command_size;
-	vectors[1].length = 0;
-
-	status = spi_master_vec_transceive_buffer_job(chip->spi, vectors, NULL);
-	Assert(status == STATUS_OK);
-	status = spi_master_vec_get_job_status_wait(chip->spi);
+	status = spi_write_buffer_wait(chip->spi, cmd_buffer, cmd.command_size);
 	Assert(status == STATUS_OK);
 
 	if (cmd.length) {
-		// Cast away const to avoid compiler warning
-		vectors[0].data = (uint8_t *)cmd.data.tx;
-		vectors[0].length = cmd.length;
-
-		status = spi_master_vec_transceive_buffer_job(chip->spi, vectors, NULL);
-		Assert(status == STATUS_OK);
-		status = spi_master_vec_get_job_status_wait(chip->spi);
+		status = spi_write_buffer_wait(chip->spi, cmd.data.tx, cmd.length);
 		Assert(status == STATUS_OK);
 	}
 
@@ -179,37 +156,43 @@ static inline void _at25dfx_chip_issue_write_command_wait(
 static inline enum status_code _at25dfx_chip_get_nonbusy_status(
 		struct at25dfx_chip_module *chip)
 {
-	struct spi_master_vec_bufdesc vectors[2];
-
 	enum status_code status;
-	uint8_t data;
+	uint16_t status_reg = 0;
 
-	vectors[0].data = &data;
-	vectors[0].length = 1;
-	vectors[1].length = 0;
-
-	_at25dfx_chip_select(chip);
+	UNUSED(status);
 
 	// Issue status read command
-	data = AT25DFX_COMMAND_READ_STATUS;
+	while (!spi_is_ready_to_write(chip->spi)) {
+	}
 
-	status = spi_master_vec_transceive_buffer_job(chip->spi, vectors, NULL);
+	_at25dfx_chip_select(chip);
+	status = spi_write(chip->spi, AT25DFX_COMMAND_READ_STATUS);
 	Assert(status == STATUS_OK);
-	status = spi_master_vec_get_job_status_wait(chip->spi);
+
+	while (!spi_is_ready_to_read(chip->spi)) {
+	}
+	status = spi_read(chip->spi, &status_reg);
 	Assert(status == STATUS_OK);
 
 	// Keep reading until busy flag clears
+	// TODO: Add some timeout functionality here!
 	do {
-		status = spi_master_vec_transceive_buffer_job(chip->spi, NULL, vectors);
+		// Do dummy writes to read out status
+		while (!spi_is_ready_to_write(chip->spi)) {
+		}
+		status = spi_write(chip->spi, 0);
 		Assert(status == STATUS_OK);
-		status = spi_master_vec_get_job_status_wait(chip->spi);
+
+		while (!spi_is_ready_to_read(chip->spi)) {
+		}
+		status = spi_read(chip->spi, &status_reg);
 		Assert(status == STATUS_OK);
-	} while (data & AT25DFX_STATUS_BUSY);
+	} while (status_reg & AT25DFX_STATUS_BUSY);
 
 	_at25dfx_chip_deselect(chip);
 
 	// Return final status
-	if (data & AT25DFX_STATUS_ERROR) {
+	if (status_reg & AT25DFX_STATUS_ERROR) {
 		return STATUS_ERR_IO;
 	}
 	return STATUS_OK;

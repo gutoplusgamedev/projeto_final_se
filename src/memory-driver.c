@@ -27,28 +27,28 @@ void flash_memory_init(void)
 	DBG_LOG ("Flash memory successfuly initialized.");
 }
 
-void flash_memory_read (uint16_t address, uint16_t* target_buffer, uint16_t size)
+void flash_memory_read (uint32_t address, uint8_t* target_buffer, uint16_t size)
 {
 	at25dfx_chip_wake(&at25dfx_chip);
 	if (at25dfx_chip_check_presence(&at25dfx_chip) != STATUS_OK) 
 	{
 		DBG_LOG ("Something is not right with the memory. Could not perform read operation.");
 	}
-	at25dfx_chip_set_sector_protect(&at25dfx_chip, address, false);
 	at25dfx_chip_read_buffer(&at25dfx_chip, address, target_buffer, size);
-	at25dfx_chip_set_sector_protect(&at25dfx_chip, address, true);
+		DBG_LOG ("Reading %s from %d.", target_buffer, address);
 	at25dfx_chip_sleep(&at25dfx_chip);
 }
 
-void flash_memory_write (uint16_t address, uint16_t* source_buffer, uint16_t size)
+void flash_memory_write (uint32_t address, uint8_t* source_buffer, uint16_t size)
 {
 	at25dfx_chip_wake(&at25dfx_chip);
 	if (at25dfx_chip_check_presence(&at25dfx_chip) != STATUS_OK)
 	{
 		DBG_LOG ("Something is not right with the memory. Could not perform write operation.");
 	}
-	at25dfx_chip_set_sector_protect(&at25dfx_chip, address, false);
+	at25dfx_chip_set_global_sector_protect(&at25dfx_chip, false);
 	at25dfx_chip_write_buffer(&at25dfx_chip, address, source_buffer, size);
-	at25dfx_chip_set_sector_protect(&at25dfx_chip, address, true);
+	at25dfx_chip_set_global_sector_protect(&at25dfx_chip, true);
+	DBG_LOG ("Wrote %s at %d.", source_buffer, address);
 	at25dfx_chip_sleep(&at25dfx_chip);
 }
