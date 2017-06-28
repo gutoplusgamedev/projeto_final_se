@@ -22,7 +22,7 @@ uint16_t get_sample_mean ()
 
 void sensor_add_sampled_data (uint16_t data)
 {
-	sensor_data.sampled_data[sensor_data.next_sample_index] = data;
+	sensor_data.sampled_data[sensor_data.next_sample_index] = sensor_clamp_sampled_value (data);
 	sensor_data.last_sampled_value = data;
 	sensor_data.next_sample_index = (sensor_data.next_sample_index + 1) % sensor_data.buffer_size;
 }
@@ -37,10 +37,28 @@ void sensor_write_to_memory ()
 	DBG_LOG ("Writing sample mean '%d' in memory.", mean);
 }
 
+int sensor_clamp_sampled_value (int value)
+{
+	if (value < MIN_VALUE)
+	{
+		value = MIN_VALUE;
+	}	
+	else if (value > MAX_VALUE)
+	{
+		value = MAX_VALUE;
+	}
+	return value;
+}
+
+float sensor_inverse_lerp (int value)
+{
+	return (value - MIN_VALUE) / (float)(MAX_VALUE - MIN_VALUE);
+}
+
 void sensor_read_from_memory()
 {
 	uint8_t data[2];
 	flash_memory_read(MEMORY_READ_ADDRESS, data, 2);
-	uint16_t value = data[0] << 8 | data[1];
-	DBG_LOG ("Last mean value was %d.", value);
+	sensor_data.read_mean_value = data[0] << 8 | data[1];
+	DBG_LOG ("Last mean value was %d.", sensor_data.read_mean_value);
 }

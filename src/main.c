@@ -75,9 +75,15 @@ struct adc_module *module;
 
 struct pt sample_pt, broadcast_pt;
 
-struct pt_sem can_broadcast_data;
+struct pt_sem sem_broadcast_data;
 
 bool is_connected = false;
+
+int counter;
+
+#define LUM_NORMAL_MESSAGE "-----Luminosity normalized value is: %.2f."
+
+#define LUM_MEAN_MESSAGE "$$$$$Luminosity last saved mean data was: %.2f"
 
 static int sample_data (struct pt *pt)
 {
@@ -87,9 +93,19 @@ static int sample_data (struct pt *pt)
 		//Wait for connection
 		PT_WAIT_UNTIL (pt, is_connected);
 		sensor_add_sampled_data(adc_get_data(module));
-		PT_SEM_SIGNAL(pt, &can_broadcast_data);
+		DBG_LOG ("Sampling...");
+		PT_SEM_SIGNAL(pt, &sem_broadcast_data);
+		PT_YIELD(pt);
 	}
 	PT_END(pt);
+}
+
+void ble_broadcast_data (char *broadcast_message, int value)
+{
+	bzero(ble_buffer, BLE_BUFFER_SIZE);
+	float lum_value = 1 - sensor_inverse_lerp (value);
+	sprintf(ble_buffer, broadcast_message, lum_value);
+	ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);
 }
 
 static int broadcast_data (struct pt *pt)
@@ -97,10 +113,8 @@ static int broadcast_data (struct pt *pt)
 	PT_BEGIN(pt);
 	while (1)
 	{
-		PT_SEM_WAIT(pt, &can_broadcast_data);
-		bzero(ble_buffer, BLE_BUFFER_SIZE);
-		sprintf(ble_buffer, "Current measured luminosity: %d.", sensor_data.last_sampled_value);
-		ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);
+		PT_SEM_WAIT(pt, &sem_broadcast_data);
+		ble_broadcast_data (LUM_NORMAL_MESSAGE, sensor_data.last_sampled_value);
 	}
 	PT_END(pt);
 }
@@ -133,20 +147,25 @@ static const ble_event_callback_t app_gap_handle[] = {
 static at_ble_status_t app_connected_event_handler(void *params)
 {
 	is_connected = true;
+	//On connection, read mean data and broadcast it.
+	sensor_read_from_memory ();
+	ble_broadcast_data (LUM_MEAN_MESSAGE, sensor_data.read_mean_value);
 	ALL_UNUSED(params);
 	return AT_BLE_SUCCESS;
 }
 
 static at_ble_status_t app_disconnected_event_handler(void *params)
 {
-		/* Started advertisement */
-		is_connected = false;
-		ble_profile_start_advertising();		
-		ALL_UNUSED(params);
-		return AT_BLE_SUCCESS;
+	/* Started advertisement */
+	is_connected = false;
+	ble_profile_start_advertising();
+	//On disconnection, write last mean to memory.		
+	sensor_write_to_memory();
+	ALL_UNUSED(params);
+	return AT_BLE_SUCCESS;
 }
 
-/* Function used for receive data */
+/*
 static void csc_app_recv_buf(uint8_t *recv_data, uint8_t recv_len)
 {
 	uint16_t ind = 0;
@@ -158,19 +177,18 @@ static void csc_app_recv_buf(uint8_t *recv_data, uint8_t recv_len)
 	}
 }
 
-/* Callback called for new data from remote device */
 static void csc_prf_report_ntf_cb(csc_report_ntf_t *report_info)
 {
 	DBG_LOG("\r\n");
 	csc_app_recv_buf(report_info->recv_buff, report_info->recv_buff_len);
 }
+*/
 
 
 int main(void )
 {
 	system_init();
 
-	/* Initialize serial console */
 	sio2host_init();
 
 	sensor_initialize(SAMPLED_DATA_AMOUNT);
@@ -179,9 +197,7 @@ int main(void )
 
 	PT_INIT (&sample_pt);
 	PT_INIT (&broadcast_pt);
-	PT_SEM_INIT (&can_broadcast_data, 0);
-
-	sensor_read_from_memory();
+	PT_SEM_INIT (&sem_broadcast_data, 0);
 
 	ble_device_init(NULL);
 	
@@ -194,14 +210,12 @@ int main(void )
 	ble_mgr_events_callback_handler(REGISTER_CALL_BACK, BLE_GAP_EVENT_TYPE, app_gap_handle);
 	
 	/* Register the notification handler */
-	notify_recv_ntf_handler(csc_prf_report_ntf_cb);
+	//notify_recv_ntf_handler(csc_prf_report_ntf_cb);
 	
 	/* Capturing the events  */
 	while(true)
 	{
-		//Handle BLE related events.
 		ble_event_task();
-		//Get the buffer zeroed and copy formatted data into it.
 		sample_data(&sample_pt);
 		broadcast_data(&broadcast_pt);
 	}

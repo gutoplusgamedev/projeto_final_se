@@ -23,8 +23,6 @@ void flash_memory_init(void)
 	at25dfx_chip_conf.cs_pin = AT25DFX_CS;
 
 	at25dfx_chip_init(&at25dfx_chip, &at25dfx_spi, &at25dfx_chip_conf);
-
-	DBG_LOG ("Flash memory successfuly initialized.");
 }
 
 void flash_memory_read (uint32_t address, uint8_t* target_buffer, uint16_t size)
@@ -35,7 +33,6 @@ void flash_memory_read (uint32_t address, uint8_t* target_buffer, uint16_t size)
 		DBG_LOG ("Something is not right with the memory. Could not perform read operation.");
 	}
 	at25dfx_chip_read_buffer(&at25dfx_chip, address, target_buffer, size);
-		DBG_LOG ("Reading %s from %d.", target_buffer, address);
 	at25dfx_chip_sleep(&at25dfx_chip);
 }
 
@@ -49,6 +46,5 @@ void flash_memory_write (uint32_t address, uint8_t* source_buffer, uint16_t size
 	at25dfx_chip_set_global_sector_protect(&at25dfx_chip, false);
 	at25dfx_chip_write_buffer(&at25dfx_chip, address, source_buffer, size);
 	at25dfx_chip_set_global_sector_protect(&at25dfx_chip, true);
-	DBG_LOG ("Wrote %s at %d.", source_buffer, address);
 	at25dfx_chip_sleep(&at25dfx_chip);
 }

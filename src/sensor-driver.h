@@ -5,6 +5,8 @@
 #include "memory-driver.h"
 
 #define MEMORY_READ_ADDRESS 0x10000 /*!< The memory adress where sensor data will be written to and read from. */
+#define MIN_VALUE 2000
+#define MAX_VALUE 30000
 
 /** @struct sensor_data_t
 	@brief Structure to hold sampled data.
@@ -15,6 +17,7 @@ struct sensor_data_t
 	uint8_t buffer_size;  /*!< Amount of elements in the array. */
 	uint16_t last_sampled_value; /*!< Holds the last value that was added to the 'sampled_data' buffer. */
 	uint8_t next_sample_index;
+	uint16_t read_mean_value;
 } sensor_data_t;
 
 struct sensor_data_t sensor_data; /*!< Instance to the sensor's data structure. */
@@ -45,5 +48,9 @@ void sensor_write_to_memory ();
  *  @brief Overwrites current sample mean with memory block starting at MEMORY_READ_ADDRESS address (default 0x10000).
  **/
 void sensor_read_from_memory ();
+
+int sensor_clamp_sampled_value (int value);
+
+float sensor_inverse_lerp (int value);
 
 #endif
