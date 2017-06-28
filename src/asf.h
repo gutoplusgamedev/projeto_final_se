@@ -56,8 +56,8 @@
 #include <compiler.h>
 #include <status_codes.h>
 
-// From module: Delay routines
-#include <delay.h>
+// From module: Common files for AT25DFx SerialFlash drivers
+#include <at25dfx.h>
 
 // From module: EXTINT - External Interrupt (Callback APIs)
 #include <extint.h>
@@ -79,9 +79,12 @@
 #include <sercom.h>
 #include <sercom_interrupt.h>
 
-// From module: SERCOM USART - Serial Communications (Callback APIs)
-#include <usart.h>
-#include <usart_interrupt.h>
+// From module: SERCOM SPI - Serial Peripheral Interface (Callback APIs)
+#include <spi.h>
+#include <spi_interrupt.h>
+
+// From module: SERCOM SPI - Serial Peripheral Interface (Master Mode, Vectored I/O)
+#include <spi_master_vec.h>
 
 // From module: SYSTEM - Clock Management for SAMD21/R21/DA/HA
 #include <clock.h>
@@ -99,17 +102,21 @@
 // From module: SYSTEM - Power Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
 #include <power.h>
 
-// From module: SYSTEM - Reset Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
-#include <reset.h>
+#include <serial.h>
 
-// From module: Standard serial I/O (stdio)
+#include <delay.h>
+
+#include <usart.h>
+
+#include <usart_interrupt.h>
+
 #include <stdio_serial.h>
 
-// From module: TC - Timer Counter (Callback APIs)
-#include <tc.h>
 #include <tc_interrupt.h>
 
-// From module: USART - Serial interface- SAM implementation for devices with only USART
-#include <serial.h>
+#include <tc.h>
+
+// From module: SYSTEM - Reset Management for SAM D20/D21/R21/D09/D10/D11/DA/HA
+#include <reset.h>
 
 #endif // ASF_H

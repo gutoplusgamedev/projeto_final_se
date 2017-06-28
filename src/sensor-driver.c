@@ -1,4 +1,5 @@
 #include "sensor-driver.h"
+#include "at25dfx.h"
 
 void sensor_initialize (uint8_t size)
 {
