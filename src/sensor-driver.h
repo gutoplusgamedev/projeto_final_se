@@ -25,6 +25,11 @@ struct sensor_data_t sensor_data; /*!< Instance to the sensor's data structure. 
  **/
 void sensor_initialize (uint8_t size);
 
+/**	@fn uint16_t get_sample_mean ();
+ *  @brief Returns the mean value of the last read samples.
+ **/
+uint16_t get_sample_mean ();
+
 /**	@fn void sensor_add_sampled_data (uint16_t data);
  *  @brief Adds a sampled data to the buffer. Goes to size - 1 and starts at 0 again (Circular).
  * @param data The value to be added.
@@ -32,15 +37,13 @@ void sensor_initialize (uint8_t size);
 void sensor_add_sampled_data (uint16_t data);
 
 /**	@fn void sensor_write_to_memory ();
- *  @brief Writes current buffer data to memory block starting at MEMORY_READ_ADDRESS address (default 0x1000).
+ *  @brief Writes current sample mean to memory block starting at MEMORY_READ_ADDRESS address (default 0x10000).
  **/
 void sensor_write_to_memory ();
 
 /**	@fn void sensor_read_from_memory ();
- *  @brief Overwrites current buffer data with memory block starting at MEMORY_READ_ADDRESS address (default 0x1000).
+ *  @brief Overwrites current sample mean with memory block starting at MEMORY_READ_ADDRESS address (default 0x10000).
  **/
 void sensor_read_from_memory ();
-
-void sensor_print_data ();
 
 #endif

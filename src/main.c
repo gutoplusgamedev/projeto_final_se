@@ -61,17 +61,52 @@
 #include "sensor-driver.h"
 #include "at25dfx.h"
 
-/* =========================== GLOBALS ============================================================ */
+#include "../src/pthreads/pt.h"
+#include "../src/pthreads/pt-sem.h"
+
+#define BLE_BUFFER_SIZE 50
+
+#define SAMPLED_DATA_AMOUNT 10
+
+char ble_buffer[BLE_BUFFER_SIZE];
+uint16_t current_sampled_value;
+
+struct adc_module *module;
+
+struct pt sample_pt, broadcast_pt;
+
+struct pt_sem can_broadcast_data;
+
+bool is_connected = false;
+
+static int sample_data (struct pt *pt)
+{
+	PT_BEGIN(pt);
+	while (1)
+	{
+		//Wait for connection
+		PT_WAIT_UNTIL (pt, is_connected);
+		sensor_add_sampled_data(adc_get_data(module));
+		PT_SEM_SIGNAL(pt, &can_broadcast_data);
+	}
+	PT_END(pt);
+}
+
+static int broadcast_data (struct pt *pt)
+{
+	PT_BEGIN(pt);
+	while (1)
+	{
+		PT_SEM_WAIT(pt, &can_broadcast_data);
+		bzero(ble_buffer, BLE_BUFFER_SIZE);
+		sprintf(ble_buffer, "Current measured luminosity: %d.", sensor_data.last_sampled_value);
+		ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);
+	}
+	PT_END(pt);
+}
 
 /* Received notification data structure */
 csc_report_ntf_t recv_ntf_info;
-
-/* Data length to be send over the air */
-uint16_t send_length = 0;
-
-/* Buffer data to be send over the air */
-uint8_t send_data[APP_TX_BUF_SIZE];
-
 
 static const ble_event_callback_t app_gap_handle[] = {
 	NULL,
@@ -95,23 +130,17 @@ static const ble_event_callback_t app_gap_handle[] = {
 	NULL
 };
 
-/**
-* @brief app_connected_state blemanager notifies the application about state
-* @param[in] at_ble_connected_t
-*/
 static at_ble_status_t app_connected_event_handler(void *params)
 {
+	is_connected = true;
 	ALL_UNUSED(params);
 	return AT_BLE_SUCCESS;
 }
 
-/**
- * @brief app_connected_state ble manager notifies the application about state
- * @param[in] connected
- */
 static at_ble_status_t app_disconnected_event_handler(void *params)
 {
 		/* Started advertisement */
+		is_connected = false;
 		ble_profile_start_advertising();		
 		ALL_UNUSED(params);
 		return AT_BLE_SUCCESS;
@@ -136,12 +165,6 @@ static void csc_prf_report_ntf_cb(csc_report_ntf_t *report_info)
 	csc_app_recv_buf(report_info->recv_buff, report_info->recv_buff_len);
 }
 
-#define BLE_BUFFER_SIZE 50
-
-#define SAMPLED_DATA_AMOUNT 10
-
-char ble_buffer[BLE_BUFFER_SIZE];
-uint16_t current_sampled_value;
 
 int main(void )
 {
@@ -152,14 +175,14 @@ int main(void )
 
 	sensor_initialize(SAMPLED_DATA_AMOUNT);
 
-	struct adc_module *module = adc_initialize (ADC_RESOLUTION_16BIT, true);
+	module = adc_initialize (ADC_RESOLUTION_16BIT, true);
+
+	PT_INIT (&sample_pt);
+	PT_INIT (&broadcast_pt);
+	PT_SEM_INIT (&can_broadcast_data, 0);
 
 	sensor_read_from_memory();
 
-	/* Initialize the buffer address and buffer length based on user input */
-	//ble_initialize_data_buffer(&send_data[0], APP_TX_BUF_SIZE);
-	
-	/* initialize the ble chip  and Set the device mac address */
 	ble_device_init(NULL);
 	
 	/* Initializing the profile */
@@ -178,12 +201,9 @@ int main(void )
 	{
 		//Handle BLE related events.
 		ble_event_task();
-		sensor_add_sampled_data(adc_get_data(module));
 		//Get the buffer zeroed and copy formatted data into it.
-		bzero(ble_buffer, BLE_BUFFER_SIZE);
-		sprintf(ble_buffer, "Current measured luminosity: %d.", sensor_data.last_sampled_value);
-		//Broadcast data.
-		ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);	
+		sample_data(&sample_pt);
+		broadcast_data(&broadcast_pt);
 	}
 	return 0;
 }
