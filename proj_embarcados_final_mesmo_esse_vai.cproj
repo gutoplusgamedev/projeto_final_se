@@ -889,6 +889,15 @@
     <None Include="src\config\conf_spi.h">
       <SubType>compile</SubType>
     </None>
+    <None Include="src\config\conf_at25dfx.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\memory-driver.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\memory-driver.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\sensor-driver.c">
       <SubType>compile</SubType>
     </Compile>

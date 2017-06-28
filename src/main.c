@@ -59,6 +59,7 @@
 #include "sio2host.h"  
 #include "adc_driver.h"
 #include "sensor-driver.h"
+#include "at25dfx.h"
 
 /* =========================== GLOBALS ============================================================ */
 
@@ -144,22 +145,56 @@ uint16_t current_sampled_value;
 
 int main(void )
 {
-#if SAMG55 || SAM4S
-	/* Initialize the SAM system. */
-	sysclk_init();
-	board_init();
-#elif SAM0
 	system_init();
-#endif
-	
+
+struct at25dfx_chip_config at25dfx_chip_conf;
+struct spi_config at25dfx_spi_config;
+//! [config_instances]
+
+struct spi_module at25dfx_spi;
+struct at25dfx_chip_module at25dfx_chip;
+
+//! [spi_setup]
+at25dfx_spi_get_config_defaults(&at25dfx_spi_config);
+at25dfx_spi_config.mode_specific.master.baudrate = AT25DFX_CLOCK_SPEED;
+at25dfx_spi_config.mux_setting = AT25DFX_SPI_PINMUX_SETTING;
+at25dfx_spi_config.pinmux_pad0 = AT25DFX_SPI_PINMUX_PAD0;
+at25dfx_spi_config.pinmux_pad1 = AT25DFX_SPI_PINMUX_PAD1;
+at25dfx_spi_config.pinmux_pad2 = AT25DFX_SPI_PINMUX_PAD2;
+at25dfx_spi_config.pinmux_pad3 = AT25DFX_SPI_PINMUX_PAD3;
+
+spi_init(&at25dfx_spi, AT25DFX_SPI, &at25dfx_chip_conf);
+spi_enable(&at25dfx_spi);
+
+//! [spi_setup]
+
+//! [chip_setup]
+at25dfx_chip_conf.type = AT25DFX_MEM_TYPE;
+at25dfx_chip_conf.cs_pin = AT25DFX_CS;
+
+at25dfx_chip_init(&at25dfx_chip, &at25dfx_spi, &at25dfx_chip_conf);
+
+
+//! [use_code]
+//! [wake_chip]
+at25dfx_chip_wake(&at25dfx_chip);
+//! [wake_chip]
+
+//! [check_presence]
+if (at25dfx_chip_check_presence(&at25dfx_chip) != STATUS_OK) {
+	// Handle missing or non-responsive device
+}
+
+	sensor_initialize(SAMPLED_DATA_AMOUNT);
+
 	/* Initialize serial console */
 	sio2host_init();
 	
 	struct adc_module *module = adc_initialize (ADC_RESOLUTION_16BIT, true);
 
-	sensor_initialize(SAMPLED_DATA_AMOUNT);
+	sensor_read_from_memory();
 
-	DBG_LOG("Initializing...");
+	sensor_print_data();
 	
 	/* Initialize the buffer address and buffer length based on user input */
 	ble_initialize_data_buffer(&send_data[0], APP_TX_BUF_SIZE);

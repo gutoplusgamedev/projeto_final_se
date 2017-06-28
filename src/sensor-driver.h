@@ -2,6 +2,9 @@
 #define SENSOR_DRIVER_H
 
 #include <asf.h>
+#include "memory-driver.h"
+
+#define MEMORY_READ_ADDRESS 0x1000 /*!< The memory adress where sensor data will be written to and read from. */
 
 /** @struct sensor_data_t
 	@brief Structure to hold sampled data.
@@ -27,5 +30,17 @@ void sensor_initialize (uint8_t size);
  * @param data The value to be added.
  **/
 void sensor_add_sampled_data (uint16_t data);
+
+/**	@fn void sensor_write_to_memory ();
+ *  @brief Writes current buffer data to memory block starting at MEMORY_READ_ADDRESS address (default 0x1000).
+ **/
+void sensor_write_to_memory ();
+
+/**	@fn void sensor_read_from_memory ();
+ *  @brief Overwrites current buffer data with memory block starting at MEMORY_READ_ADDRESS address (default 0x1000).
+ **/
+void sensor_read_from_memory ();
+
+void sensor_print_data ();
 
 #endif

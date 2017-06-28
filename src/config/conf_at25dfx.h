@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief AT25DFx SerialFlash driver public SPI HAL interface.
+ * \brief AT25DFx configuration.
  *
- * Copyright (C) 2013-2015 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -44,51 +44,27 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#ifndef AT25DFX_HAL_H
-#define AT25DFX_HAL_H
+#ifndef CONF_AT25DFX_H_INCLUDED
+#define CONF_AT25DFX_H_INCLUDED
 
-#include <spi_master_vec.h>
+#include <board.h>
+#include "at25dfx.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//! Select the SPI module AT25DFx is connected to
+#define AT25DFX_SPI                 SERIALFLASH_SPI_MODULE
 
-/**
- * \ingroup asfdoc_common2_at25dfx_group
- *
- * @{
- */
+/** AT25DFx device type */
+#define AT25DFX_MEM_TYPE            AT25DFX_081A
 
-/** Typedef for SPI HAL */
-typedef struct spi_master_vec_module at25dfx_spi_module_t;
+#define AT25DFX_SPI_PINMUX_SETTING  SERIALFLASH_SPI_MUX_SETTING
+#define AT25DFX_SPI_PINMUX_PAD0     SERIALFLASH_SPI_PINMUX_PAD0
+#define AT25DFX_SPI_PINMUX_PAD1     SERIALFLASH_SPI_PINMUX_PAD1
+#define AT25DFX_SPI_PINMUX_PAD2     SERIALFLASH_SPI_PINMUX_PAD2
+#define AT25DFX_SPI_PINMUX_PAD3     SERIALFLASH_SPI_PINMUX_PAD3
 
-/**
- * \brief Initialize SPI configuration
- *
- * This function initializes the SPI configuration struct with default settings
- * that should work with SerialFlash devices.
- *
- * The user can change the baud rate and the MUX settings for SERCOM and GPIO
- * pads, but should leave all other settings intact.
- *
- * \param[out] config Address of config struct to initialize.
- */
-static inline void at25dfx_spi_master_vec_get_config_defaults(
-		struct spi_master_vec_config *const config)
-{
-	spi_master_vec_get_config_defaults(config);
-}
+#define AT25DFX_CS                  SERIALFLASH_SPI_CS 
 
-static inline void at25dfx_spi_get_config_defaults(
-struct spi_config *const config)
-{
-	spi_get_config_defaults(config);
-}
+//! SPI master speed in Hz.
+#define AT25DFX_CLOCK_SPEED         120000
 
-/** @ */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // AT25DFX_HAL_H
+#endif  /* CONF_AT25DFX_H_INCLUDED */
