@@ -49,8 +49,8 @@
 // <<< Use Configuration Wizard in Context Menu >>>
 // <h> Custom Serial Chat Profile Configuration
 // =======================
-#ifndef __CSCP_H__
-#define __CSCP_H__
+#ifndef __BLE_PROFILE_H__
+#define __BLE_PROFILE_H__
 #include "at_ble_api.h"
 
 /****************************************************************************************
@@ -139,7 +139,8 @@ typedef enum
 ****************************************************************************************/
 
 /* Typedef for csc profile */
-typedef struct app_csc_data{
+typedef struct ble_profile_data_t
+{
 	/** To check the buffer pointer */
 	uint8_t *buff_ptr;
 	/** To check the buffer length */
@@ -156,7 +157,7 @@ typedef struct app_csc_data{
 	at_ble_characteristic_found_t csc_char;
 	/** Information of descriptor found */
 	at_ble_descriptor_found_t csc_desc;
-}app_csc_data_t;
+}ble_profile_data_t;
 
 /**@brief SPOG report notification or indication, notify to user. */
 typedef struct csc_report_ntf
@@ -171,7 +172,7 @@ typedef struct csc_report_ntf
 
 
 /*Profile Information*/
-app_csc_data_t app_csc_info;
+ble_profile_data_t ble_profile_data;
 
 
 /****************************************************************************************
@@ -183,80 +184,68 @@ typedef void (*recv_ntf_callback_t)(csc_report_ntf_t *);
 /****************************************************************************************
 *                                       Functions                                       *
 ****************************************************************************************/
-/** @brief CSC profile buffer initialization
-* @param[in] databuf Initialization data pointer
-* @param[in] datalen Data length
- */
-void csc_prf_buf_init(uint8_t *databuf, uint16_t datalen);
+/**	@fn void ble_initialize_data_buffer(uint8_t *databuf, uint16_t datalen);
+ *  @brief Initializes the buffer to be used to broadcast data to BLE.
+ * @param databuf The buffer to be initialized.
+ * @param datalen The length of the buffer.
+ **/
+void ble_initialize_data_buffer(uint8_t *databuf, uint16_t datalen);
 
-/** @brief CSC profile send data function
-* @param[in] databuf Data buffer send to remote device
-* @param[in] datalen Data length
- */
-void csc_prf_send_data(uint8_t *databuf, uint16_t datalen);
+/**	@fn void ble_profile_initialize(void *param);
+ *  @brief Initializes profile and the service.
+ *	@sa at_ble_status_t ble_service_initialize(uint8_t *buf, uint16_t len);
+ **/
+void ble_profile_initialize(void *param);
 
-/** @brief CSC profile initialization function 
- */
-void csc_prf_init(void *param);
+/**	@fn at_ble_status_t ble_profile_disconnect_handler(void *params);
+ *  @brief Handles disconnections.
+ **/
+at_ble_status_t ble_profile_disconnect_handler(void *params);
 
-/**
-* \CSC device disconnected handler function
-*/
+/**	@fn void ble_profile_start_advertising(void);
+ *  @brief Starts advertising the device, i.e. makes it publicly visible and pairable.
+ **/
+void ble_profile_start_advertising(void);
 
-at_ble_status_t csc_prf_disconnect_event_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_char_changed_handler(void *params);
+ *  @brief Handles characteristic changes, i.e. when the BLE device has transmitted data.
+ **/
+at_ble_status_t ble_profile_char_changed_handler(void *params);
 
-/** @brief CSC profile advertisement function
- */
-void csc_prf_dev_adv(void);
+/**	@fn at_ble_status_t ble_profile_connected_handler(void *params);
+ *  @brief Handles connections.
+ **/
+at_ble_status_t ble_profile_connected_handler(void *params);
 
-/** @brief Service characteristic change handler function
- */
-at_ble_status_t csc_prf_char_changed_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_service_found_handler(void * params);
+ *  @brief Called when the device is in the connection process and found a matching service.
+ **/
+at_ble_status_t ble_profile_service_found_handler(void * params);
 
-/**
- * @brief Handler for connection event 
- * @param[in] connected event parameter containing details like handle
- * \note Called by the ble_manager after receiving connection event
- */
-at_ble_status_t csc_prf_connected_state_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_char_found_handler(void *params);
+ *  @brief Called when a characteristic was found during discovery process.
+ **/
+at_ble_status_t ble_profile_char_found_handler(void *params);
 
-/**
- * @brief Handler for service found 
- * @param[in] service found event parameter containing details about the service found
- * \note Called by the ble_manager after receiving the service
- */
-at_ble_status_t csc_prf_service_found_handler(void * params);
+/**	@fn at_ble_status_t ble_profile_descriptor_found_handler(void *params);
+ *  @brief Called when a characteristic's descriptor was found during discovery process.
+ **/
+at_ble_status_t ble_profile_descriptor_found_handler(void *params);
 
-/**
- * @brief Handler for characteristic found 
- * @param[in] characteristic found event parameter containing details about the characteristic found
- * \note Called by the ble_manager after receiving the characteristic
- */
-at_ble_status_t csc_prf_characteristic_found_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_discovery_complete_handler(void *params);
+ *  @brief Called when discovery is completed. It can be related to service, characteristics or descriptor.
+ **/
+at_ble_status_t ble_profile_discovery_complete_handler(void *params);
 
-/**
- * @brief Handler for descriptor found 
- * @param[in] characteristic found event parameter containing details about the descriptor found
- * \note Called by the ble_manager after receiving the descriptor
- */
-at_ble_status_t csc_prf_descriptor_found_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_notification_handler(void *params);
+ *  @brief Called when received a notification from the BLE device. For instance, to let us know a value has changed.
+ **/
+at_ble_status_t ble_profile_notification_handler(void *params);
 
-/**
- * @brief Handler for discovery complete
- * @param[in] discovery complete event parameter containing details about the descriptor found
- * \note Called by the ble_manager after receiving the descriptor
- */
-at_ble_status_t csc_prf_discovery_complete_handler(void *params);
-
-/**
- * @brief invoked by ble manager on receiving notification
- */
-at_ble_status_t csc_prf_notification_handler(void *params);
-
-/**
- * @brief Handler for configuring the notification for remote device
- */
-at_ble_status_t csc_prf_write_notification_handler(void *params);
+/**	@fn at_ble_status_t ble_profile_write_notification_handler(void *params);
+ *  @brief Called when we've transmitted a notification.
+ **/
+at_ble_status_t ble_profile_write_notification_handler(void *params);
 
 /** @brief Function call the user defined callback for sending the receive data
 */
@@ -264,9 +253,13 @@ void notify_recv_ntf_handler(recv_ntf_callback_t recv_ntf_fn);
 
 /** @brief Notification confirmation handler
 */
-at_ble_status_t csc_notification_confirmation_handler(void *params);
 
-#endif /*__CSC_H__*/
+/**	@fn at_ble_status_t ble_profile_notification_confirmation_handler(void *params);
+ *  @brief Called when a notification was successfully confirmed by the device.
+ **/
+at_ble_status_t ble_profile_notification_confirmation_handler(void *params);
+
+#endif
 // </h>
 
 // <<< end of configuration section >>>

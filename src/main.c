@@ -41,11 +41,6 @@
  *
  */
 
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel
- *Support</a>
- */
-
 /**
  * \mainpage
  * \section preface Preface
@@ -57,9 +52,9 @@
 #include "console_serial.h"
 #include "at_ble_api.h"
 #include "ble_manager.h"
-#include "csc_app.h"
-#include "cscp.h"
-#include "cscs.h"
+#include "main.h"
+#include "ble_profile.h"
+#include "ble_service.h"
 #include "conf_extint.h"
 #include "sio2host.h"  
 #include "adc_driver.h"
@@ -115,7 +110,7 @@ static at_ble_status_t app_connected_event_handler(void *params)
 static at_ble_status_t app_disconnected_event_handler(void *params)
 {
 		/* Started advertisement */
-		csc_prf_dev_adv();		
+		ble_profile_start_advertising();		
 		ALL_UNUSED(params);
 		return AT_BLE_SUCCESS;
 }
@@ -139,45 +134,11 @@ static void csc_prf_report_ntf_cb(csc_report_ntf_t *report_info)
 	csc_app_recv_buf(report_info->recv_buff, report_info->recv_buff_len);
 }
 
-/* Function used for send data */
-static void csc_app_send_buf(void)
-{
-	uint16_t ind = 0;
-	uint16_t len = 0;
-	uint8_t buff = 0;
-	len = sio2host_rx(&buff, 1);
-	if (len){
-		for (ind = 0; ind < len; ind++){
-			if(buff != ENTER_BUTTON_PRESS){
-				sio2host_putchar(buff);
-				if (buff == BACKSPACE_BUTTON_PRESS)
-				{
-					sio2host_putchar(SPACE_BAR);
-					sio2host_putchar(buff);
-					if(send_length)
-						send_length--;
-				}
-				  
-				if(send_length < APP_TX_BUF_SIZE){
-					if(buff != BACKSPACE_BUTTON_PRESS)
-						send_data[send_length++] = buff;
-				}else{
-					csc_prf_send_data(&send_data[0], send_length);
-					send_length = 0;
-				}
-			}else{ // User press enter to send data
-				if(send_length){
-					ind = send_length;
-					send_length = 0;
-					csc_prf_send_data(&send_data[0], ind);
-					DBG_LOG("\r\n");
-				}
-			}
-		}
-	}
-}
+#define BLE_BUFFER_SIZE 50
 
-bool app_exec = true;
+char ble_buffer[BLE_BUFFER_SIZE];
+uint16_t current_sampled_value;
+
 int main(void )
 {
 #if SAMG55 || SAM4S
@@ -193,38 +154,36 @@ int main(void )
 	
 	struct adc_module *module = adc_initialize (ADC_RESOLUTION_16BIT, true);
 
-	DBG_LOG("Initializing Custom Serial Chat Application");
+	DBG_LOG("Initializing...");
 	
 	/* Initialize the buffer address and buffer length based on user input */
-	csc_prf_buf_init(&send_data[0], APP_TX_BUF_SIZE);
+	ble_initialize_data_buffer(&send_data[0], APP_TX_BUF_SIZE);
 	
 	/* initialize the ble chip  and Set the device mac address */
 	ble_device_init(NULL);
 	
 	/* Initializing the profile */
-	csc_prf_init(NULL);
+	ble_profile_initialize(NULL);
 	
 	/* Started advertisement */
-	csc_prf_dev_adv();
+	ble_profile_start_advertising();
 	
-	ble_mgr_events_callback_handler(REGISTER_CALL_BACK,
-	BLE_GAP_EVENT_TYPE,
-	app_gap_handle);
+	ble_mgr_events_callback_handler(REGISTER_CALL_BACK, BLE_GAP_EVENT_TYPE, app_gap_handle);
 	
 	/* Register the notification handler */
 	notify_recv_ntf_handler(csc_prf_report_ntf_cb);
 	
 	/* Capturing the events  */
-	while(app_exec){
-		uint16_t val;
-		adc_get_data (module, &val);
-		char buffer[50];
-		bzero (buffer, 50);
-		sprintf(buffer, "manda essa merda %d", val);
-		//DBG_LOG ("XEXECA %d.", val);
+	while(true)
+	{
+		//Handle BLE related events.
 		ble_event_task();
-		csc_app_send_buf();
-		csc_serv_send_data(app_csc_info.conn_params.handle, buffer, 50);	
+		current_sampled_value = adc_get_data(module);
+		//Get the buffer zeroed and copy formatted data into it.
+		bzero(ble_buffer, BLE_BUFFER_SIZE);
+		sprintf(ble_buffer, "Current measured luminosity: %d.", current_sampled_value);
+		//Broadcast data.
+		ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);	
 	}
 	return 0;
 }

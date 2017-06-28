@@ -50,24 +50,9 @@
 #define __CSC_APP_H__
 #include "stdio.h"
 
-/****************************************************************************************
-*							        Macros	                                     							*
-****************************************************************************************/
-/**@brief Keypad debounce time */
-#define KEY_PAD_DEBOUNCE_TIME	(200)
 
 /**@brief Application maximum transmit buffer size */
 #define APP_TX_BUF_SIZE   (150)
-
-/**@brief Enter button press to send data */
-#define ENTER_BUTTON_PRESS (13)
-
-/**@brief Entered backspace button */
-#define BACKSPACE_BUTTON_PRESS (8)
-
-/**@brief Space bar */
-#define SPACE_BAR (32)
-
 
 /**
 * @brief app_connected_state blemanager notifies the application about state

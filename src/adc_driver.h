@@ -27,7 +27,7 @@ struct adc_module *adc_initialize (enum adc_resolution sampling_res, bool initia
  * Samples the data from the ADC.
  *
  * @param module The module from which the data is being sampled.
- * @param value The address where the data will be stored.
  * @sa adc_module *adc_initialize (adc_resolution sampling_res, bool initialize);
+ * @return Returns the sampled data.
  **/
-void adc_get_data (struct adc_module *module, uint16_t *value);
+uint16_t adc_get_data (struct adc_module *module);

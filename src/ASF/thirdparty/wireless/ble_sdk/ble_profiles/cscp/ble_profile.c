@@ -57,8 +57,8 @@
 #include "string.h"
 #include "ble_utils.h"
 #include "ble_manager.h"
-#include "cscp.h"
-#include "cscs.h"
+#include "ble_profile.h"
+#include "ble_service.h"
 
 ///* Scan response data */
 //uint8_t scan_rsp_data[SCAN_RESP_LEN] = {0x09,0xff, 0x00, 0x06, 0xd6, 0xb2, 0xf0, 0x05, 0xf0, 0xf8};
@@ -69,16 +69,16 @@ static const ble_event_callback_t csc_gap_handle[] = {
 	NULL,
 	NULL,
 	NULL,
-	csc_prf_connected_state_handler,
-	csc_prf_disconnect_event_handler,
+	ble_profile_connected_handler,
+	ble_profile_disconnect_handler,
 	NULL,
 	NULL,
-	csc_prf_write_notification_handler,
+	ble_profile_write_notification_handler,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	csc_prf_write_notification_handler,
+	ble_profile_write_notification_handler,
 	NULL,
 	NULL,
 	NULL,
@@ -86,23 +86,23 @@ static const ble_event_callback_t csc_gap_handle[] = {
 };
 
 static const ble_event_callback_t csc_gatt_client_handle[] = {
-	csc_prf_service_found_handler,
+	ble_profile_service_found_handler,
 	NULL,
-	csc_prf_characteristic_found_handler,
-	csc_prf_descriptor_found_handler,
-	csc_prf_discovery_complete_handler,
+	ble_profile_char_found_handler,
+	ble_profile_descriptor_found_handler,
+	ble_profile_discovery_complete_handler,
 	NULL,
 	NULL,
 	NULL,
-	csc_prf_notification_handler,
+	ble_profile_notification_handler,
 	NULL
 };
 
 
 static const ble_event_callback_t csc_gatt_server_handle[] = {
-	csc_notification_confirmation_handler,
+	ble_profile_notification_confirmation_handler,
 	NULL,
-	csc_prf_char_changed_handler,
+	ble_profile_char_changed_handler,
 	NULL,
 	NULL,
 	NULL,
@@ -119,19 +119,19 @@ recv_ntf_callback_t recv_ntf_cb;
 /**
 * \CSC buffer initialization function
 */
-void csc_prf_buf_init(uint8_t *databuf, uint16_t datalen)
+void ble_initialize_data_buffer(uint8_t *databuf, uint16_t datalen)
 {
-	app_csc_info.buff_ptr = databuf;
-	app_csc_info.buff_len = datalen;
+	ble_profile_data.buff_ptr = databuf;
+	ble_profile_data.buff_len = datalen;
 }
 
 /**
 * \CSC profile initialization function
 */
-void csc_prf_init(void *param)
+void ble_profile_initialize(void *param)
 { 
 	at_ble_status_t status;
-	csc_serv_init(app_csc_info.buff_ptr, app_csc_info.buff_len);
+	ble_service_initialize(ble_profile_data.buff_ptr, ble_profile_data.buff_len);
 	
 	ble_mgr_events_callback_handler(REGISTER_CALL_BACK,
 	BLE_GAP_EVENT_TYPE,
@@ -151,21 +151,9 @@ void csc_prf_init(void *param)
 }
 
 /**
-* \CSC profile send data function
-*/
-void csc_prf_send_data(uint8_t *databuf, uint16_t datalen)
-{
-	if(datalen <= app_csc_info.buff_len){
-		csc_serv_send_data(app_csc_info.conn_params.handle, databuf, datalen);
-	}else{
-		csc_serv_send_data(app_csc_info.conn_params.handle, databuf, app_csc_info.buff_len);
-	}
-}
-
-/**
 * \CSC device advertisement handler function
 */
-void csc_prf_dev_adv(void)
+void ble_profile_start_advertising(void)
 {
 	/* Start of advertisement */
 	if(at_ble_adv_start(AT_BLE_ADV_TYPE_UNDIRECTED, AT_BLE_ADV_GEN_DISCOVERABLE, NULL, AT_BLE_ADV_FP_ANY, APP_CSC_FAST_ADV, APP_CSC_ADV_TIMEOUT, 0) == AT_BLE_SUCCESS){
@@ -178,16 +166,16 @@ void csc_prf_dev_adv(void)
 /**
  * @brief Connection handler invoked by ble manager
  */
-at_ble_status_t csc_prf_connected_state_handler(void *params)
+at_ble_status_t ble_profile_connected_handler(void *params)
 {
 	at_ble_status_t status;
-	memcpy((uint8_t *)&app_csc_info.conn_params, params, sizeof(at_ble_connected_t));
-	if(!app_csc_info.devicedb){		
-		app_csc_info.discover_role = DISCOVER_SERVICE;	
-		app_csc_info.csc_serv.service_uuid.type = AT_BLE_UUID_128;
-		memcpy(&app_csc_info.csc_serv.service_uuid.uuid[0], CSC_SERVICE_UUID, CSC_UUID_128_LEN);
+	memcpy((uint8_t *)&ble_profile_data.conn_params, params, sizeof(at_ble_connected_t));
+	if(!ble_profile_data.devicedb){		
+		ble_profile_data.discover_role = DISCOVER_SERVICE;	
+		ble_profile_data.csc_serv.service_uuid.type = AT_BLE_UUID_128;
+		memcpy(&ble_profile_data.csc_serv.service_uuid.uuid[0], CSC_SERVICE_UUID, CSC_UUID_128_LEN);
 		/* Discover Remote Service by service UUID */
-		status = at_ble_primary_service_discover_by_uuid(app_csc_info.conn_params.handle,START_HANDLE, END_HANDLE, &app_csc_info.csc_serv.service_uuid);
+		status = at_ble_primary_service_discover_by_uuid(ble_profile_data.conn_params.handle,START_HANDLE, END_HANDLE, &ble_profile_data.csc_serv.service_uuid);
 		if(status != AT_BLE_SUCCESS){
 			DBG_LOG("Failed to start service discovery. status = %d", status);
 		} else {
@@ -200,27 +188,27 @@ at_ble_status_t csc_prf_connected_state_handler(void *params)
 /**
  * @brief Discovery Complete handler invoked by ble manager
  */
-at_ble_status_t csc_prf_discovery_complete_handler(void *params)
+at_ble_status_t ble_profile_discovery_complete_handler(void *params)
 {
 		at_ble_discovery_complete_t discover_status;
 		memcpy((uint8_t *)&discover_status, params, sizeof(at_ble_discovery_complete_t));
 		if(discover_status.status == AT_DISCOVER_SUCCESS){
 			if(discover_status.operation == AT_BLE_DISC_BY_UUID_SVC){
 				DBG_LOG_DEV("Discover Service Info:\r\n -->ConnHandle 0x%02x\r\n -->start handle 0x%02x\r\n -->End handle : 0x%02x",
-				app_csc_info.csc_serv.conn_handle,
-				app_csc_info.csc_serv.start_handle,
-				app_csc_info.csc_serv.end_handle);				
-				if(at_ble_characteristic_discover_all(app_csc_info.conn_params.handle, app_csc_info.csc_serv.start_handle, app_csc_info.csc_serv.end_handle) != AT_BLE_SUCCESS){
+				ble_profile_data.csc_serv.conn_handle,
+				ble_profile_data.csc_serv.start_handle,
+				ble_profile_data.csc_serv.end_handle);				
+				if(at_ble_characteristic_discover_all(ble_profile_data.conn_params.handle, ble_profile_data.csc_serv.start_handle, ble_profile_data.csc_serv.end_handle) != AT_BLE_SUCCESS){
 					DBG_LOG("Fail to start discover characteristic");
 				}
 			}
 			else if(discover_status.operation == AT_BLE_DISC_ALL_CHAR){
-				if(at_ble_descriptor_discover_all(app_csc_info.csc_char.conn_handle,(app_csc_info.csc_char.value_handle+1), (app_csc_info.csc_serv.end_handle)) != AT_BLE_SUCCESS){
+				if(at_ble_descriptor_discover_all(ble_profile_data.csc_char.conn_handle,(ble_profile_data.csc_char.value_handle+1), (ble_profile_data.csc_serv.end_handle)) != AT_BLE_SUCCESS){
 					DBG_LOG("Descriptor Discovery Failed");
 				}
 			}
 			else if(discover_status.operation == AT_BLE_DISC_DESC_CHAR){
-				app_csc_info.devicedb = true;
+				ble_profile_data.devicedb = true;
 			}
 		}
 		return AT_BLE_SUCCESS;
@@ -229,35 +217,35 @@ at_ble_status_t csc_prf_discovery_complete_handler(void *params)
 /**
  * @brief Service found handler invoked by ble manager
  */
-at_ble_status_t csc_prf_service_found_handler(void * params)
+at_ble_status_t ble_profile_service_found_handler(void * params)
 {
 	DBG_LOG_DEV("Service Found handler");
-	memcpy((uint8_t *)&app_csc_info.csc_serv, params, sizeof(at_ble_primary_service_found_t));
+	memcpy((uint8_t *)&ble_profile_data.csc_serv, params, sizeof(at_ble_primary_service_found_t));
 	return AT_BLE_SUCCESS;
 }
 
 /**
  * @brief characteristic found handler invoked by ble manager
  */
-at_ble_status_t csc_prf_characteristic_found_handler(void *params)
+at_ble_status_t ble_profile_char_found_handler(void *params)
 {
-	memcpy((uint8_t *)&app_csc_info.csc_char, params, sizeof(at_ble_characteristic_found_t));
+	memcpy((uint8_t *)&ble_profile_data.csc_char, params, sizeof(at_ble_characteristic_found_t));
 	return AT_BLE_SUCCESS;
 }
 
 /**
  * @brief client descriptor found handler invoked by ble manager
  */
-at_ble_status_t csc_prf_descriptor_found_handler(void *params)
+at_ble_status_t ble_profile_descriptor_found_handler(void *params)
 {
-		memcpy((uint8_t *)&app_csc_info.csc_desc, params, sizeof(at_ble_descriptor_found_t));
+		memcpy((uint8_t *)&ble_profile_data.csc_desc, params, sizeof(at_ble_descriptor_found_t));
 		return AT_BLE_SUCCESS;
 }
 
 /**
  * @brief invoked by ble manager on receiving notification
  */
-at_ble_status_t csc_prf_notification_handler(void *params)
+at_ble_status_t ble_profile_notification_handler(void *params)
 {
 	 at_ble_notification_recieved_t notif;
 	 csc_report_ntf_t ntf_info;
@@ -272,11 +260,11 @@ at_ble_status_t csc_prf_notification_handler(void *params)
 /**
  * @brief invoked by ble manager for setting the notification 
  */
-at_ble_status_t csc_prf_write_notification_handler(void *params)
+at_ble_status_t ble_profile_write_notification_handler(void *params)
 {
 	uint8_t data[2] = {1, 0};
 	DBG_LOG("\r\n");
-	if(at_ble_characteristic_write(app_csc_info.csc_desc.conn_handle, app_csc_info.csc_desc.desc_handle, 0, 2, data, false, true) == AT_BLE_FAILURE){
+	if(at_ble_characteristic_write(ble_profile_data.csc_desc.conn_handle, ble_profile_data.csc_desc.desc_handle, 0, 2, data, false, true) == AT_BLE_FAILURE){
 		DBG_LOG("\r\nFailed to send characteristic Write Request");
 	}
 	UNUSED(params);
@@ -287,9 +275,9 @@ at_ble_status_t csc_prf_write_notification_handler(void *params)
 * \CSC device disconnected handler function
 */
 
-at_ble_status_t csc_prf_disconnect_event_handler(void *params)
+at_ble_status_t ble_profile_disconnect_handler(void *params)
 {
-	app_csc_info.devicedb = false;
+	ble_profile_data.devicedb = false;
     ALL_UNUSED(params);
 	return AT_BLE_SUCCESS;
 }
@@ -297,7 +285,7 @@ at_ble_status_t csc_prf_disconnect_event_handler(void *params)
 /**
 * \Service characteristic change handler function
 */
-at_ble_status_t csc_prf_char_changed_handler(void *params)
+at_ble_status_t ble_profile_char_changed_handler(void *params)
 {
 	at_ble_characteristic_changed_t change_params;
 	memcpy((uint8_t *)&change_params, params, sizeof(at_ble_characteristic_changed_t));
@@ -316,7 +304,7 @@ void notify_recv_ntf_handler(recv_ntf_callback_t recv_ntf_fn)
  *	to give the status of notification sent
  *  @param[in] at_ble_cmd_complete_event_t address of the cmd completion
  */	
-at_ble_status_t csc_notification_confirmation_handler(void *params)
+at_ble_status_t ble_profile_notification_confirmation_handler(void *params)
 {
 	at_ble_cmd_complete_event_t *event_param = (at_ble_cmd_complete_event_t *)params;
 	if (event_param->status == AT_BLE_SUCCESS){

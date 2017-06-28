@@ -733,10 +733,10 @@
     <Folder Include="src\ASF\thirdparty\wireless\addons\sio2host\uart\" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\" />
-    <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp\" />
+    <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\ble_mgr\" />
-    <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs\" />
+    <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\inc\" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\lib\" />
     <Folder Include="src\ASF\thirdparty\wireless\ble_sdk\lib\cm0p\" />
@@ -1124,7 +1124,7 @@
     <None Include="src\ASF\sam0\utils\cmsis\samd21\include\component\usb.h">
       <SubType>compile</SubType>
     </None>
-    <None Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs\cscs.h">
+    <None Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs\ble_service.h">
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\sam0\utils\cmsis\samd21\include\instance\dsu.h">
@@ -1154,7 +1154,7 @@
     <None Include="src\ASF\sam0\utils\cmsis\samd21\include\component\sercom.h">
       <SubType>compile</SubType>
     </None>
-    <None Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp\cscp.h">
+    <None Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp\ble_profile.h">
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\common\utils\parts.h">
@@ -1220,7 +1220,7 @@
     <None Include="src\ASF\sam0\utils\cmsis\samd21\include\instance\tc7.h">
       <SubType>compile</SubType>
     </None>
-    <None Include="src\csc_app.h">
+    <None Include="src\main.h">
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\sam0\utils\cmsis\samd21\include\instance\usb.h">
@@ -1418,13 +1418,13 @@
     <Compile Include="src\ASF\thirdparty\wireless\addons\sio2host\uart\sio2host.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp\cscp.c">
+    <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\ble_profiles\cscp\ble_profile.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\ble_mgr\ble_manager.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs\cscs.c">
+    <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\ble_services\cscs\ble_service.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\services\console\sam0\console_serial.c">
@@ -1442,7 +1442,7 @@
     <Compile Include="src\ASF\thirdparty\wireless\ble_sdk\src\platform.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\csc_app.c">
+    <Compile Include="src\main.c">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

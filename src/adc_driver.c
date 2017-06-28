@@ -14,8 +14,10 @@ struct adc_module *adc_initialize (enum adc_resolution sampling_res, bool initia
 	return module;
 }
 
-void adc_get_data (struct adc_module *module, uint16_t *value)
+uint16_t adc_get_data (struct adc_module *module)
 {
+	uint16_t data;
 	adc_start_conversion (module);
-	while (adc_read(module, value) == STATUS_BUSY);
+	while (adc_read(module, &data) == STATUS_BUSY);
+	return data;
 }

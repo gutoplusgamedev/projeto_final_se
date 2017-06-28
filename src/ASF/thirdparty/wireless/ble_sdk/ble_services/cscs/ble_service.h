@@ -41,17 +41,9 @@
  * \asf_license_stop
  *
  */
-
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel
- *Support</a>
- */
-
-// <<< Use Configuration Wizard in Context Menu >>>
-// <h> Custom Serial Chat Service Configuration
 // =======================
-#ifndef __CSCS_H__
-#define __CSCS_H__
+#ifndef __BLE_SERVICE_H__
+#define __BLE_SERVICE_H__
 
 /****************************************************************************************
 *							        Macros	                                     		*
@@ -63,32 +55,32 @@
 *							        Structures                                     		*
 ****************************************************************************************/
 /** @brief Custom serial chat service info */
-typedef struct csc_serv
+typedef struct ble_service
 {
 	at_ble_uuid_t	serv_uuid; 
 	at_ble_handle_t	serv_handle; 
-	at_ble_characteristic_t	endpoint_chars;  
-}csc_serv_t;
+	at_ble_characteristic_t	endpoint_characteristics;  
+}ble_service;
 
-/****************************************************************************************
-*                                       Functions                                       *
-****************************************************************************************/
-/** @brief Initialize the csc service initialization function
-  * 
-  * @param[in] buf		Buffer pointer for data to be send
-  * @param[in] len      size of buffer		
-  */
-at_ble_status_t csc_serv_init(uint8_t *buf, uint16_t len);
+/**	@fn at_ble_status_t ble_service_initialize(uint8_t *buf, uint16_t len);
+ *  @brief Initializes the bluetooth service at a pre-defined service UUID.
+ * @param buf The starting characteristic's data.
+ * @param len The size of the characteristic's buffer.
+ * @return Returns AT_BLE_SUCCESS if succeeded. Error code otherwise.
+ **/
+at_ble_status_t ble_service_initialize(uint8_t *buf, uint16_t len);
 
-/** @brief Function used for sending data to remote device
-  * 
- * @param[in] buf		Buffer pointer for data to be send
- * @param[in] len       size of buffer
-  */
-at_ble_status_t csc_serv_send_data(uint16_t connhandle, uint8_t *databuf, uint16_t datalen);
+/**	@fn at_ble_status_t ble_service_send_data(uint16_t connhandle, uint8_t *databuf, uint16_t datalen);
+ *  @brief Sends data through a pre-established service.
+ * @param connhandle The handle of the connection to which the data is going to be sent.
+ * @param databuff The data to be sent.
+ * @param datalen The size of the buffer to be sent.
+ * @return Returns AT_BLE_SUCCESS if succeeded. Error code otherwise.
+ **/
+at_ble_status_t ble_service_send_data(uint16_t connhandle, uint8_t *databuf, uint16_t datalen);
 
 
-#endif /*__CSCS_H__*/
+#endif
 // </h>
 
 // <<< end of configuration section >>>
