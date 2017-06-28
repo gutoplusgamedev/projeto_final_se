@@ -138,7 +138,7 @@
 
 #if defined CSC_DEVICE
 #ifndef BLE_DEVICE_NAME
-#define BLE_DEVICE_NAME				"AT-SENSOR-DATA-PRINTER"
+#define BLE_DEVICE_NAME				("AT-BLE")
 #endif	/* BLE_DEVICE_NAME */
 #endif /* CSC_DEVICE */
 

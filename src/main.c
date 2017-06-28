@@ -58,6 +58,7 @@
 #include "conf_extint.h"
 #include "sio2host.h"  
 #include "adc_driver.h"
+#include "sensor-driver.h"
 
 /* =========================== GLOBALS ============================================================ */
 
@@ -136,6 +137,8 @@ static void csc_prf_report_ntf_cb(csc_report_ntf_t *report_info)
 
 #define BLE_BUFFER_SIZE 50
 
+#define SAMPLED_DATA_AMOUNT 10
+
 char ble_buffer[BLE_BUFFER_SIZE];
 uint16_t current_sampled_value;
 
@@ -153,6 +156,8 @@ int main(void )
 	sio2host_init();
 	
 	struct adc_module *module = adc_initialize (ADC_RESOLUTION_16BIT, true);
+
+	sensor_initialize(SAMPLED_DATA_AMOUNT);
 
 	DBG_LOG("Initializing...");
 	
@@ -178,10 +183,10 @@ int main(void )
 	{
 		//Handle BLE related events.
 		ble_event_task();
-		current_sampled_value = adc_get_data(module);
+		sensor_add_sampled_data(adc_get_data(module));
 		//Get the buffer zeroed and copy formatted data into it.
 		bzero(ble_buffer, BLE_BUFFER_SIZE);
-		sprintf(ble_buffer, "Current measured luminosity: %d.", current_sampled_value);
+		sprintf(ble_buffer, "Current measured luminosity: %d.", sensor_data.last_sampled_value);
 		//Broadcast data.
 		ble_service_send_data(ble_profile_data.conn_params.handle, ble_buffer, BLE_BUFFER_SIZE);	
 	}

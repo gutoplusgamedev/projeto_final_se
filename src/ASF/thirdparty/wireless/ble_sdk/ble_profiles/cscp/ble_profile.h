@@ -92,7 +92,7 @@
 //	<s.9>	Advertising String
 //	<i>	String Descriptor describing in advertising packet.
 //	<id> cscp_adv_data_name_data
-#define ADV_DATA_NAME_DATA				("AT-CSC")
+#define ADV_DATA_NAME_DATA				("AT-BLE")
 
 /** @brief Advertisement type length */
 #define ADV_TYPE_LEN					(0x01)
